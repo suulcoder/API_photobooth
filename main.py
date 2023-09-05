@@ -1,5 +1,6 @@
 import cv2
-from moviepy.editor import VideoFileClip, concatenate_videoclips, AudioFileClip, CompositeAudioClip
+import numpy as np
+from moviepy.editor import VideoFileClip, concatenate_videoclips, AudioFileClip, CompositeAudioClip,TextClip,CompositeVideoClip
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS, cross_origin
 
@@ -7,6 +8,19 @@ img_size = 200
 app = Flask(__name__)
 CORS(app)
 
+def sepia(src_image):
+    gray = cv2.cvtColor(src_image, cv2.COLOR_BGR2GRAY)
+    normalized_gray = np.array(gray, np.float32)/255
+    #solid color
+    sepia = np.ones(src_image.shape)
+    sepia[:,:,0] *= 153 #B
+    sepia[:,:,1] *= 204 #G
+    sepia[:,:,2] *= 255 #R
+    #hadamard
+    sepia[:,:,0] *= normalized_gray #B
+    sepia[:,:,1] *= normalized_gray #G
+    sepia[:,:,2] *= normalized_gray #R
+    return np.array(sepia, np.uint8)
 
 def image_to_video(path):
     img = cv2.imread(path + '.png')
@@ -14,8 +28,8 @@ def image_to_video(path):
     size = (width,height)
     out = cv2.VideoWriter(path + '.mp4',cv2.VideoWriter_fourcc(*'DIVX'), 15, size)
     
-    for i in range(0,10):
-        out.write(img)
+    for _ in range(0,10):
+        out.write(sepia(img))
     
     out.release()
     print("\n Log: \tImage saved to " + path + ".mp4\n")
@@ -61,20 +75,55 @@ def index():
             image_to_video(image3)
             image_to_video(image4)
             
+            txt_clip_3 = TextClip("3",font='Arial', fontsize = 400, color = 'white').set_pos('center').set_duration(1) 
+            txt_clip_2 = TextClip("2",font='Arial', fontsize = 400, color = 'white').set_pos('center').set_duration(1) 
+            txt_clip_1 = TextClip("1",font='Arial', fontsize = 400, color = 'white').set_pos('center').set_duration(1) 
+            
             _video1 = VideoFileClip(video1 + '.mp4')
+            _video1_0 = _video1.subclip(0, _video1.duration-3)
+            _video1_1 = _video1.subclip(_video1.duration-3,_video1.duration-2)
+            _video1_2 = _video1.subclip(_video1.duration-2,_video1.duration-1) 
+            _video1_3 = _video1.subclip(_video1.duration-1,_video1.duration-0) 
+            
             _video2 = VideoFileClip(video2 + '.mp4')
+            _video2_0 = _video2.subclip(0, _video2.duration-3)
+            _video2_1 = _video2.subclip(_video2.duration-3,_video2.duration-2)
+            _video2_2 = _video2.subclip(_video2.duration-2,_video2.duration-1) 
+            _video2_3 = _video2.subclip(_video2.duration-1,_video2.duration-0) 
+            
             _video3 = VideoFileClip(video3 + '.mp4')
+            _video3_0 = _video3.subclip(0, _video3.duration-3)
+            _video3_1 = _video3.subclip(_video3.duration-3,_video3.duration-2)
+            _video3_2 = _video3.subclip(_video3.duration-2,_video3.duration-1) 
+            _video3_3 = _video3.subclip(_video3.duration-1,_video3.duration-0) 
+            
             _video4 = VideoFileClip(video4 + '.mp4')
+            _video4_0 = _video4.subclip(0, _video4.duration-3)
+            _video4_1 = _video4.subclip(_video4.duration-3,_video4.duration-2)
+            _video4_2 = _video4.subclip(_video4.duration-2,_video4.duration-1) 
+            _video4_3 = _video4.subclip(_video4.duration-1,_video4.duration-0) 
             
             final_clip = concatenate_videoclips(
                 [
-                    _video1,
+                    _video1_0,
+                    CompositeVideoClip([_video1_1, txt_clip_3]),
+                    CompositeVideoClip([_video1_2, txt_clip_2]), 
+                    CompositeVideoClip([_video1_3, txt_clip_1]), 
                     VideoFileClip(image1 + '.mp4'),
-                    _video2,
+                    _video2_0,
+                    CompositeVideoClip([_video2_1, txt_clip_3]),
+                    CompositeVideoClip([_video2_2, txt_clip_2]), 
+                    CompositeVideoClip([_video2_3, txt_clip_1]), 
                     VideoFileClip(image2 + '.mp4'),
-                    _video3,
+                    _video3_0,
+                    CompositeVideoClip([_video3_1, txt_clip_3]),
+                    CompositeVideoClip([_video3_2, txt_clip_2]), 
+                    CompositeVideoClip([_video3_3, txt_clip_1]), 
                     VideoFileClip(image3 + '.mp4'),
-                    _video4,
+                    _video4_0,
+                    CompositeVideoClip([_video4_1, txt_clip_3]),
+                    CompositeVideoClip([_video4_2, txt_clip_2]), 
+                    CompositeVideoClip([_video4_3, txt_clip_1]), 
                     VideoFileClip(image4 + '.mp4'),
                 ]
             )
