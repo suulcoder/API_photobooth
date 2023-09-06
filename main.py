@@ -1,8 +1,10 @@
 import cv2
 import numpy as np
 from moviepy.editor import VideoFileClip, concatenate_videoclips, AudioFileClip, CompositeAudioClip,TextClip,CompositeVideoClip
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, after_this_request, current_app
 from flask_cors import CORS, cross_origin
+import uuid
+import os
 
 img_size = 200
 app = Flask(__name__)
@@ -140,12 +142,30 @@ def index():
                     fx_2.set_start(_video1.duration + _video2.duration + _video3.duration + _video4.duration + 3)
                 ]
             )
-            final_clip.write_videofile('final.mp4', codec="libx264", audio_codec="aac")
+            name = 'files/' + str(uuid.uuid4()) + '.mp4'
+            final_clip.write_videofile(name, codec="libx264", audio_codec="aac")
             
-            print("done")
-            return send_file("final.mp4", attachment_filename='final.mp4')
-            
+            return {
+                "success": True,
+                "filename": name
+            }
     return jsonify(data)
+
+@app.route('/files/<filename>/download')
+def download_file(filename):
+    file_path = 'files/<filename>'
+    file_handle = open(file_path, 'r')
+
+    # This *replaces* the `remove_file` + @after_this_request code above
+    def stream_and_remove_file():
+        yield from file_handle
+        file_handle.close()
+        os.remove(file_path)
+
+    return current_app.response_class(
+        stream_and_remove_file(),
+        headers={'Content-Disposition': 'attachment', 'filename': filename}
+    )
 
 
 if __name__ == "__main__":
