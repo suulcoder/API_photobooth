@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 from moviepy.editor import VideoFileClip, concatenate_videoclips, AudioFileClip, CompositeAudioClip,TextClip,CompositeVideoClip
 from flask import Flask, jsonify, request, current_app
